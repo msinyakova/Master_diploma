@@ -1,0 +1,52 @@
+{
+  "slices" : [
+    {
+      "sls_number" : 1,
+      "lambda" : 0.2,
+      "packet_size" : 100,
+      "bandwidth" : 1000,
+      "path" : [[1, 2]]
+    }
+  ],
+  "topology" : {
+    "switches" : [
+      {
+        "number" : 1,
+        "bandwidth" : 10,
+        "queues" : [
+          {
+            "priority" : 1,
+            "queue_number" : 1,
+            "weight" : 0.6,
+            "slices" : [1]
+          },
+          {
+            "priority" : 1,
+            "queue_number" : 2,
+            "weight" : 0.4,
+            "slices" : [2]
+          }
+        ]
+      },
+      {
+        "number" : 2,
+        "bandwidth" : 10,
+        "queues" : [
+          {
+            "priority" : 1,
+            "queue_number" : 1,
+            "weight" : 0.6,
+            "slices" : [1]
+          },
+          {
+            "priority" : 1,
+            "queue_number" : 2,
+            "weight" : 0.4,
+            "slices" : [2]
+          }
+        ]
+      }
+    ],
+    "links" : [[1, 2]]
+  }
+}
