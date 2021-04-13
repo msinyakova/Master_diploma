@@ -2,10 +2,17 @@
   "slices" : [
     {
       "sls_number" : 1,
-      "lambda" : 0.2,
+      "lambda" : 0.1,
       "packet_size" : 100,
-      "bandwidth" : 10,
-      "path" : [[1, 2, 3]]
+      "bandwidth" : 40,
+      "path" : [[1, 2]]
+    },
+    {
+      "sls_number" : 2,
+      "lambda" : 0.4,
+      "packet_size" : 110,
+      "bandwidth" : 35,
+      "path" : [[1, 2]]
     }
   ],
   "topology" : {
@@ -19,18 +26,30 @@
             "queue_number" : 1,
             "weight" : 0.6,
             "slice" : 1
+          },
+          {
+            "priority" : 2,
+            "queue_number" : 2,
+            "weight" : 0.4,
+            "slice" : 2
           }
         ]
       },
       {
         "number" : 2,
-        "bandwidth" : 50,
+        "bandwidth" : 100,
         "queues" : [
           {
             "priority" : 1,
             "queue_number" : 1,
             "weight" : 0.6,
             "slice" : 1
+          },
+          {
+            "priority" : 1,
+            "queue_number" : 2,
+            "weight" : 0.4,
+            "slice" : 2
           }
         ]
       }

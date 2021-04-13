@@ -5,7 +5,7 @@ import math
 import random
 
 T = 60
-transmit = 0.5
+transmit = 0.01
 
 
 # состояния событий
@@ -164,8 +164,10 @@ class Time:
                 i += 1
             else:
                 break
-        print(i,':',ev.time,'-',self.time_list[i-1].time)
         self.time_list.insert(i, ev)
+        # for elem in self.time_list:
+        #     print(elem.time, end=' ')
+        # print()
 
 
 class Statistics:
@@ -262,14 +264,13 @@ def simulate(event_time, topology, stat):
     while event != 0:
         sw = topology[event.switch_number]
         # если наступило событие окончания передачи пакета, освободи канал
-        print("queue buffer", sw.queues_send)
         if event.state == State.SEND:
             print("1 --- Chanel became free in time", event.time, "on switch", sw.id, '\n')
             sw.link_state = True
             # print('chanel is free')
 
         # если пришет новый пакет, размести его в буфере соответствующей очереди
-        if event.state == State.ARRIVAL and event.packet != 0:
+        if event.state == State.ARRIVAL:
             print("2 --- In time", event.time, "on switch", sw.id, "arrived packet with time", event.packet.begin_time, '\n')
             # определяем очередь, которая соответствует данному слайсу
             queue_number = sw.slice_distribution[event.packet.slice]
@@ -294,12 +295,13 @@ def simulate(event_time, topology, stat):
             # ставим флаг занятости канала передачи
             sw.link_state = False
             # добавляем новое событие на текущем коммутаторе
+            print("4 --- Create new event on sw", sw.id, "packet time", packet.begin_time, '\n')
             event_time.add_event(Event(State.SEND, event.time + duration, 0, sw.id))
             # создаем событие на следующем коммутаторе
             if len(sw.next_switches) != 0:
                 next_sw = sw.next_switches[0]
                 print("4 --- Create new event on sw", next_sw, "packet time", packet.begin_time, '\n')
-                event_time.add_event(Event(State.ARRIVAL, event.time + duration + transmit, event.packet, next_sw))
+                event_time.add_event(Event(State.ARRIVAL, event.time + duration + transmit, packet, next_sw))
             else:
                 # для каждого слайса сохраняем суммарную задержку в сети
                 # print('packet_begin_time =', packet.begin_time)
