@@ -6,6 +6,13 @@
       "packet_size" : 100,
       "bandwidth" : 1000,
       "path" : [[1, 2]]
+    },
+    {
+      "sls_number" : 2,
+      "lambda" : 0.3,
+      "packet_size" : 50,
+      "bandwidth" : 500,
+      "path" : [[1, 2]]
     }
   ],
   "topology" : {
@@ -18,13 +25,13 @@
             "priority" : 1,
             "queue_number" : 1,
             "weight" : 0.6,
-            "slices" : [1]
+            "slice" : 1
           },
           {
             "priority" : 1,
             "queue_number" : 2,
             "weight" : 0.4,
-            "slices" : [2]
+            "slice" : 2
           }
         ]
       },
@@ -36,13 +43,13 @@
             "priority" : 1,
             "queue_number" : 1,
             "weight" : 0.6,
-            "slices" : [1]
+            "slice" : 1
           },
           {
-            "priority" : 1,
+            "priority" : 2,
             "queue_number" : 2,
             "weight" : 0.4,
-            "slices" : [2]
+            "slice" : 2
           }
         ]
       }

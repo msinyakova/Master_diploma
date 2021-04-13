@@ -27,7 +27,6 @@ class Packet:
         self.size = size_p          # размер пакета
         self.slice = sls            # номер слайса, которому принадлежит пакет
         self.begin_time = start_t   # время поступления пакета в сеть
-        self.end_time = 0           # время выхода пакета из сети
         self.virtual_end_time = 0   # виртуальное время окончания отправки пакета на коммутаторе
 
 
@@ -41,11 +40,13 @@ class Slice:
 
 
 class Queue:
-    def __init__(self, priority_, number_, weight_):
-        self.number = number_        # номер очереди
-        self.weight = weight_        # вес очереди
-        self.buffer = list()         # буфер с пакетами
-        self.priority = priority_    # приориет
+    def __init__(self, priority_, number_, weight_, slice_):
+        self.number = number_           # номер очереди
+        self.weight = weight_           # вес очереди
+        self.buffer = list()            # буфер с пакетами
+        self.priority = priority_       # приориет
+        self.slice = slice_             # слайс, которой передает в этой очереди
+        self.virt_finish_send_time = 0  # время окончания отправки последнего пакета из этой очереди
 
     # получение текущей заполненности буфера
     def size_of(self):
@@ -60,12 +61,10 @@ class Queue:
         self.buffer.append(packet)
 
 
-# вычисляем виртуальное время окончания отправки пакета
-def calculate_virtual_end_time(queue, packet):
-    # TODO
-    start_time = 0  # max(F_i^(k-1), V(phisical_time_i))
-    finish_time = start_time + packet.size / queue.weight
-    return finish_time
+class VirtualTime:
+    B_j = set()         # множество непустых очередей - B_j
+    prev_virt_time = 0  # виртуальное время предыдущего изменения непустых очередей - V(t_{j-1})
+    phys_time = 0       # физическое время изменения непустых очередей - t_{j-1}
 
 
 class Switch:
@@ -77,14 +76,17 @@ class Switch:
         self.link_state = True              # состояние канала (занят передачей или свободен)
         self.slice_distribution = dict()    # соответствие слайсов и очередей
         self.next_switches = []             # следующие коммутаторы, на которые может быть отправлен пакет
+        self.queue_priority_distr = dict()  # каждому приоритету соответствуют номера очередей, имеющие этот приоритет
+        self.virt_time_param = dict()       # параметры виртуального времени (B_j, V(t_{j-1}), t_{j-1})
 
-    # по]ложить пакет в буфер очереди, которая закреплена за этим слайсом
-    def push_packet_to_queue(self, queue_number, packet):
-        # вычисляем вируальное время окончания отправки
-        virtual_finish_time = calculate_virtual_end_time(self.queues_info[queue_number], packet)
+    # положить пакет в буфер очереди, которая закреплена за этим слайсом
+    def push_packet_to_queue(self, queue_number, packet, in_time):
         # получаем приоритет очереди на отправку
         priority = self.queues_info[queue_number].priority
-        # print(priority, self.queues_send)
+        # вычисляем вируальное время окончания отправки
+        virtual_finish_time = self.calculate_virtual_end_time(self.queues_info[queue_number], packet, priority, in_time)
+        # сохраняем виртуальное время отправки последнего пакета из этой очереди
+        self.queues_info[queue_number].virt_finish_send_time = virtual_finish_time
         # добавляем пакет в нужное место в списке ожидания на отправку
         packet.virtual_ebd_time = virtual_finish_time
         pos = 0
@@ -94,13 +96,48 @@ class Switch:
             else:
                 break
         self.queues_send[priority - 1].insert(pos, packet)
+        self.queues_info[queue_number].buffer.append(packet)
 
     # получить пакет на передачу из первой непустой очереди
     def get_packet_for_transmit(self):
         for queue in self.queues_send:
             if len(queue) != 0:
-                return queue.pop(0)
+                packet = queue.pop(0)
+                self.queues_info[self.slice_distribution[packet.slice]].pop()
+                return packet
         return 0
+
+    # вычисляем виртуальное время окончания отправки пакета
+    def calculate_virtual_end_time(self, queue, packet, priority, in_time):
+        weight = 0
+        tau = in_time - self.virt_time_param[priority].phys_time
+        for number in self.virt_time_param[priority].B_j:
+            weight += self.queues_info[number].weight
+        if weight == 0:
+            weight = 1
+        virtual_time = self.virt_time_param[priority].prev_virt_time + tau / weight
+        start_time = max(queue.virt_finish_send_time, virtual_time)  # max(F_i^(k-1), V(phisical_time_i))
+        finish_time = start_time + packet.size / queue.weight
+        return finish_time
+
+    def check_virtual_time_correct(self, queue_number, curr_time):
+        priority = self.queues_info[queue_number].priority
+        same_priority_queues = self.queue_priority_distr[priority]
+        not_empty = set()
+        for number in same_priority_queues:
+            if self.queues_info[number].size_of() != 0:
+                not_empty.add(number)
+        if not self.virt_time_param[priority].B_j == not_empty:
+            weight = 0
+            for number in self.virt_time_param[priority].B_j:
+                weight += self.queues_info[number].weight
+            if weight == 0:
+                weight = 1
+            self.virt_time_param[priority].prev_virt_time += \
+                (curr_time - self.virt_time_param[priority].phys_time) / weight
+            self.virt_time_param[priority].phys_time = curr_time
+            self.virt_time_param[priority].B_j.clear()
+            self.virt_time_param[priority].B_j.update(not_empty)
 
 
 class Time:
@@ -131,10 +168,19 @@ class Time:
         self.time_list.insert(i, ev)
 
 
-# TODO
 class Statistics:
-    def __init__(self):
-        self.delay = list()
+    def __init__(self, slices, topology):
+        self.delay = dict()
+        self.data_voluem = dict()
+        self.throughput = dict()
+        for key in slices.keys():
+            self.delay[key] = list()
+        for sw in topology.keys():
+            self.data_voluem[sw] = dict()
+            self.throughput[sw] = dict()
+            for sls in slices.keys():
+                self.data_voluem[sw][sls] = 0
+                self.throughput[sw][sls] = list()
 
 
 # заполняем все очерди на отправку пустыми списками (подготовка к симуляции)
@@ -167,12 +213,15 @@ def parse_config(argv, slices, topology):
 
             # считываем очереди
             for qu in sw['queues']:
-                one_queue = Queue(qu['priority'], qu['queue_number'], qu['weight'])
+                one_queue = Queue(qu['priority'], qu['queue_number'], qu['weight'], slices[qu['slice']])
                 # заполняем соответствие "слайс" - "очередь"
-                for elem in qu['slices']:
-                    one_switch.slice_distribution[elem] = one_queue.number
+                one_switch.slice_distribution[qu['slice']] = one_queue.number
                 # добавляем словарь с очередями "номер очереди" - "очередь"
                 one_switch.queues_info[one_queue.number] = one_queue
+                # добавляем информацию о приоритетах очередей: "приоритет" - "очередь"
+                one_switch.queue_priority_distr.setdefault(one_queue.priority, [])
+                one_switch.queue_priority_distr[one_queue.priority].append(one_queue.number)
+                one_switch.virt_time_param[one_queue.priority] = VirtualTime()
             # заполняем топологию по формату "номер коммутатора" - "коммутатор"
             topology[one_switch.id] = one_switch
 
@@ -219,8 +268,12 @@ def simulate(event_time, topology, stat):
 
         # если пришет новый пакет, размести его в буфере соответствующей очереди
         if event.state == State.ARRIVAL and event.packet != 0:
+            # определяем очередь, которая соответствует данному слайсу
             queue_number = sw.slice_distribution[event.packet.slice]
-            sw.push_packet_to_queue(queue_number, event.packet)
+            # добавляем пакет в очередь
+            sw.push_packet_to_queue(queue_number, event.packet, event.time)
+            # проверям состояние виртулаьного времени
+            sw.check_virtual_time_correct(queue_number, event.time)
 
         # если канал свободен, выполни передачу пакета
         if sw.link_state:
@@ -230,7 +283,9 @@ def simulate(event_time, topology, stat):
             if packet == 0:
                 event = event_time.get_time()
                 continue
-            # вычисляем виртуальное время окончания отправки пакета
+            # проверям состояние виртулаьного времени
+            sw.check_virtual_time_correct(sw.slice_distribution[packet.slice], event.time)
+            # вычисляем время окончания отправки пакета
             duration = math.ceil(float(packet.size) / sw.bandwidth)
             # ставим флаг занятости канала передачи
             sw.link_state = False
@@ -241,7 +296,13 @@ def simulate(event_time, topology, stat):
                 next_sw = sw.next_switches[0]
                 event_time.add_event(Event(State.ARRIVAL, event.time + duration + transmit, event.packet, next_sw))
             else:
-                stat.delay.append(event.time + duration - packet.begin_time)
+                # для каждого слайса сохраняем суммарную задержку в сети
+                stat.delay[packet.slice].append(event.time + duration + transmit - packet.begin_time)
+            # на каждом коммутаторе для каждого слайса сохраняем объем переданных данных
+            stat.data_voluem[sw.id][packet.slice] += packet.size
+            # и вычисляем текущую пропускную способность
+            stat.throughput[sw.id][packet.slice].append(
+                stat.data_voluem[sw.id][packet.slice] / event.time + duration + transmit)
         event = event_time.get_time()
 
 
@@ -249,10 +310,12 @@ def simulate(event_time, topology, stat):
 def main(argv):
     slices = dict()
     topology = dict()
-    stat = Statistics()
 
     # парсим конфиг файл и заполняем необходимы структуры
     parse_config(argv, slices, topology)
+
+    # подготавливаем модуль статистики
+    stat = Statistics(slices, topology)
 
     # генерируем время прихода пакетов
     event_time = Time()
