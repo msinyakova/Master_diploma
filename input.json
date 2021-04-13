@@ -4,52 +4,33 @@
       "sls_number" : 1,
       "lambda" : 0.2,
       "packet_size" : 100,
-      "bandwidth" : 1000,
-      "path" : [[1, 2]]
-    },
-    {
-      "sls_number" : 2,
-      "lambda" : 0.3,
-      "packet_size" : 50,
-      "bandwidth" : 500,
-      "path" : [[1, 2]]
+      "bandwidth" : 10,
+      "path" : [[1, 2, 3]]
     }
   ],
   "topology" : {
     "switches" : [
       {
         "number" : 1,
-        "bandwidth" : 10,
+        "bandwidth" : 100,
         "queues" : [
           {
             "priority" : 1,
             "queue_number" : 1,
             "weight" : 0.6,
             "slice" : 1
-          },
-          {
-            "priority" : 1,
-            "queue_number" : 2,
-            "weight" : 0.4,
-            "slice" : 2
           }
         ]
       },
       {
         "number" : 2,
-        "bandwidth" : 10,
+        "bandwidth" : 50,
         "queues" : [
           {
             "priority" : 1,
             "queue_number" : 1,
             "weight" : 0.6,
             "slice" : 1
-          },
-          {
-            "priority" : 2,
-            "queue_number" : 2,
-            "weight" : 0.4,
-            "slice" : 2
           }
         ]
       }

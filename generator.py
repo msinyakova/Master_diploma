@@ -164,7 +164,7 @@ class Time:
                 i += 1
             else:
                 break
-        # print(i,':',ev.time,'-',self.time_list[i-1].time)
+        print(i,':',ev.time,'-',self.time_list[i-1].time)
         self.time_list.insert(i, ev)
 
 
@@ -231,7 +231,7 @@ def parse_config(argv, slices, topology):
             topology[lk[0]].links_state = True
     # формируем виртуальную очередь на отправку пакетов
     create_virtual_send(topology)
-    print('Finish parsing file')
+    print('Finish parsing file\n')
 
 
 # генерация входящего потока в виде Пуассона
@@ -241,17 +241,17 @@ def generate(slices, event_time):
         sls = slices[key]
         packet_count = 1
         t = random.expovariate(sls.p_lambda)
-        arrival_packet = Packet(sls.packet_size, sls.number, t)
         while t < T:
             # добавляем шейпинг
             if (packet_count * sls.packet_size) / t > sls.bandwidth:
                 t += ((packet_count * sls.packet_size / sls.bandwidth) - t)
             print("sls_number", sls.number, "time = ", t)
+            arrival_packet = Packet(sls.packet_size, sls.number, t)
             # добавляем событие в общий список событий
             event_time.add_event(Event(State.ARRIVAL, t, arrival_packet, sls.path[0][0]))
             # генерируем экспоненциальное значение временного интервала между событиями
             t += random.expovariate(sls.p_lambda)
-    print("Finish generate")
+    print("Finish generate\n")
 
 
 # симуляция передачи, пока реализована на одном узле
@@ -261,13 +261,16 @@ def simulate(event_time, topology, stat):
     event = event_time.get_time()
     while event != 0:
         sw = topology[event.switch_number]
-        print("time =", event.time, "switch =", sw.id)
         # если наступило событие окончания передачи пакета, освободи канал
+        print("queue buffer", sw.queues_send)
         if event.state == State.SEND:
+            print("1 --- Chanel became free in time", event.time, "on switch", sw.id, '\n')
             sw.link_state = True
+            # print('chanel is free')
 
         # если пришет новый пакет, размести его в буфере соответствующей очереди
         if event.state == State.ARRIVAL and event.packet != 0:
+            print("2 --- In time", event.time, "on switch", sw.id, "arrived packet with time", event.packet.begin_time, '\n')
             # определяем очередь, которая соответствует данному слайсу
             queue_number = sw.slice_distribution[event.packet.slice]
             # добавляем пакет в очередь
@@ -284,6 +287,7 @@ def simulate(event_time, topology, stat):
                 event = event_time.get_time()
                 continue
             # проверям состояние виртулаьного времени
+            print("3 --- Send packet in time", event.time, "with time", packet.begin_time, "on switch", sw.id, '\n')
             sw.check_virtual_time_correct(sw.slice_distribution[packet.slice], event.time)
             # вычисляем время окончания отправки пакета
             duration = math.ceil(float(packet.size) / sw.bandwidth)
@@ -294,9 +298,11 @@ def simulate(event_time, topology, stat):
             # создаем событие на следующем коммутаторе
             if len(sw.next_switches) != 0:
                 next_sw = sw.next_switches[0]
+                print("4 --- Create new event on sw", next_sw, "packet time", packet.begin_time, '\n')
                 event_time.add_event(Event(State.ARRIVAL, event.time + duration + transmit, event.packet, next_sw))
             else:
                 # для каждого слайса сохраняем суммарную задержку в сети
+                # print('packet_begin_time =', packet.begin_time)
                 stat.delay[packet.slice].append(event.time + duration + transmit - packet.begin_time)
             # на каждом коммутаторе для каждого слайса сохраняем объем переданных данных
             stat.data_voluem[sw.id][packet.slice] += packet.size
@@ -304,6 +310,7 @@ def simulate(event_time, topology, stat):
             stat.throughput[sw.id][packet.slice].append(
                 stat.data_voluem[sw.id][packet.slice] / event.time + duration + transmit)
         event = event_time.get_time()
+    print('finish simulation\n')
 
 
 # ----------------------------MAIN------------------------------------
@@ -314,6 +321,7 @@ def main(argv):
     # парсим конфиг файл и заполняем необходимы структуры
     parse_config(argv, slices, topology)
 
+    print(topology[2].next_switches)
     # подготавливаем модуль статистики
     stat = Statistics(slices, topology)
 
@@ -323,6 +331,10 @@ def main(argv):
 
     # выполняем симуляцию отправки пакетов
     simulate(event_time, topology, stat)
+    for sls in slices.keys():
+        print("delay on slice", sls, ':', stat.delay[sls])
+    for sw in topology.keys():
+        print("data value on switch", sw, ':', stat.data_voluem[sw])
 
 
 if __name__ == "__main__":
