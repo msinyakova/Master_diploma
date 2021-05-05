@@ -1,5 +1,7 @@
 import sys
 import json
+import csv
+
 import objects
 import slicedelay
 
@@ -31,11 +33,36 @@ def modify_queue_parameters(slices, slices_order, topology):
 
 
 # парсим конфиг файл и заполняем необходимы структуры
-def parse_config(input_file, chi_square, slices, topology):
+def parse_config(input_file, slices, topology):
     print('Start parsing input file', input_file)
     with open(input_file) as json_file:
         data = json.load(json_file)
-        # TODO
+        chi_square = data["chi_square"]
+
+        # считываем топологию
+        topo_data = data["topology"]
+        for sw_number in topo_data["switches"]:
+            sw = objects.Switch(sw_number)
+            topology.switches[sw_number] = sw
+        for lk in topo_data["links"]:
+            topology.links.append(lk["link"])
+            topology.switches[lk["link"][0]].physical_speed = lk["bandwidth"]
+
+        # считываем слайсы
+        for sls_data in data["slices"]:
+            sls = objects.Slice(sls_data["sls_number"], sls_data["qos_throughput"], sls_data["qos_delay"])
+            for fl in sls_data["flows"]:
+                flow = objects.Flow(fl["epsilon"], fl["path"])
+                if "statistic" in fl:
+                    with open(fl["statistic"], 'r') as f:
+                        reader = csv.reader(f)
+                        stat_list = list(reader)
+                    flow.define_distribution(stat_list, chi_square)
+                else:
+                    flow.rho_a = fl["rho_a"]
+                    flow.b_a = fl["b_a"]
+                sls.flows_list.append(flow)
+            slices[sls.id] = sls
 
 
 # записываем результаты работы в выходной файл
@@ -45,12 +72,11 @@ def write_result(output_file):
 
 
 def main(argv):
-    chi_square = list()
     slices = dict()
     topology = objects.Topology()
 
     # парсим конфиг файл и заполняем необходимы структуры
-    parse_config(argv[0], chi_square, slices, topology)
+    parse_config(argv[0], slices, topology)
 
     # сортируем слайсы в зависимости от требования к задержке
     slices_order = list()

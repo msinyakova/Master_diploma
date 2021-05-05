@@ -18,7 +18,7 @@
       "sls_number" : 1,
       "qos_delay" : 0.1,
       "qos_throughput" : 50,
-      "routes" : [
+      "flows" : [
         {
               "path" : [1, 2, 3],
               "epsilon" : 0.01,

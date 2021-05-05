@@ -18,23 +18,28 @@ class Priority:
 
 
 class Switch:
-    def __init__(self, speed_):
+    def __init__(self, number_):
+        self.number = number_           # номер коммутатора
         self.priority_list = list()     # список приоритетов на коммутаторе
-        self.physical_speed = speed_    # физическая пропускная способность канала
+        self.physical_speed = 0         # физическая пропускная способность канала
 
 
 class Topology:
     def __init__(self):
-        self.switches = list()      # список коммутаторов
+        self.switches = dict()      # коммутаторы в топологии
         self.links = list()         # список каналов
 
 
 class Flow:
-    def __init__(self):
+    def __init__(self, eps_, path_):
         self.rho_a = 0          # скорость поступления трафика (для кривой нагрузки)
         self.b_a = 0            # всплеск трафика (для кривой нагрузки)
-        self.epsilon = 0        # вероятность ошибки оценки кривой нагрузки
-        self.path = list()      # список коммутатор, через которые проходит поток
+        self.epsilon = eps_     # вероятность ошибки оценки кривой нагрузки
+        self.path = path_       # список коммутатор, через которые проходит поток
+
+    def define_distribution(self, stat_list, chi_square):
+        print(self.rho_a, self.b_a)
+        # TODO
 
 
 class Slice:
