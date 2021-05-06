@@ -29,10 +29,14 @@ class Priority:
 
     def recalculation(self):
         self.mean_delay = 0.0
+        required_throughput = 0
         for queue in self.queue_list:
             self.mean_delay += queue.slice.qos_delay
-            queue.weight = queue.slice.qos.throughput / self.throughput
+            required_throughput += queue.slice.qos_throughput
         self.mean_delay /= len(self.queue_list)
+        for queue in self.queue_list:
+            queue.weight = queue.slice.qos_throughput / required_throughput
+            queue.rho_s = queue.weight * self.throughput
 
 
 class Switch:
