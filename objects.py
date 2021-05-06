@@ -10,7 +10,9 @@ class Queue:
         self.rho_s = 0              # скорость для кривой обслуживания
         self.b_s = 0                # задержка для кривой обслуживания
         self.flow_numbers = 0       # количество маршрутов слайса, проходящих через этот коммутатор
+        self.slice_lambda = 0       # lambda суммарная по всем потокам в слайсе
         self.add_flow_number(sw)
+        self.find_slice_input_flow()
 
     def add_flow_number(self, sw):
         for flow in self.slice.flows_list:
@@ -18,21 +20,29 @@ class Queue:
                 if elem == sw:
                     self.flow_numbers += 1
 
+    def find_slice_input_flow(self):
+        for flow in self.slice.flows_list:
+            self.slice_lambda += flow.rho_a
+
 
 class Priority:
     def __init__(self, number_, throughput_, qos_delay_, queue):
-        self.priority = number_         # значение приоритета
-        self.throughput = throughput_   # пропускная способность приоритета
-        self.queue_list = [queue]       # список очередей, входящих в приоритет
-        self.mean_delay = qos_delay_    # среднее требование по задержка приоритета
-        self.delay = 0                  # суммарная задержка приоритета
+        self.priority = number_                     # значение приоритета
+        self.throughput = throughput_               # пропускная способность приоритета
+        self.queue_list = [queue]                   # список очередей, входящих в приоритет
+        self.mean_delay = qos_delay_                # среднее требование по задержка приоритета
+        self.delay = 0                              # суммарная задержка приоритета
+        self.priority_lambda = queue.slice_lambda   # lambda суммарная по всем очередям
+        self.sigma_priority = 0                     # сумма нагрузок вышестоящих приоритетов
 
     def recalculation(self):
         self.mean_delay = 0.0
+        self.priority_lambda = 0.0
         required_throughput = 0
         for queue in self.queue_list:
             self.mean_delay += queue.slice.qos_delay
             required_throughput += queue.slice.qos_throughput
+            self.priority_lambda += queue.slice_lambda
         self.mean_delay /= len(self.queue_list)
         for queue in self.queue_list:
             queue.weight = queue.slice.qos_throughput / required_throughput
@@ -99,10 +109,10 @@ class Flow:
 
 
 class Slice:
-    def __init__(self, id_, throughput_, delay_):
+    def __init__(self, id_, throughput_, delay_, packet_):
         self.id = id_                       # номер слайса
         self.qos_throughput = throughput_   # требования к пропускной способности слайса
         self.qos_delay = delay_             # требования к задержке слайса
         self.flows_list = list()            # список маршрутов
         self.sls_sw_set = set()             # множество коммутаторв, через которые проходят потоки слайса
-
+        self.packet_size = packet_          # размер пакетов, передаваемых в слайсе

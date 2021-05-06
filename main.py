@@ -27,10 +27,11 @@ def print_queue_organization(topology):
     for sw in topology.switches.keys():
         print('----------- switch', sw, '------------------')
         for pr in topology.switches[sw].priority_list:
-            print('priority', pr.priority, ':', 'throughput =', pr.throughput, 'mean_delay =', pr.mean_delay)
+            print('priority', pr.priority, ':', 'throughput =', pr.throughput,
+                  'mean_delay =', pr.mean_delay, 'delay = ', pr.delay)
             for queue in pr.queue_list:
                 print('\t queue', queue.number, ': weight =', queue.weight, 'rho_s =', queue.rho_s,
-                      'flows_number =', queue.flow_numbers)
+                      'b_s =', queue.b_s, 'flows_number =', queue.flow_numbers)
 
 
 # для каждого слайса создаем множество коммутаторов, через которое проходят потоки
@@ -113,9 +114,51 @@ def set_initial_parameters(slices, slices_order, topology):
 
 
 # формируем кривую обслуживания на каждом коммутаторе для начальных параметров
-def create_start_service_curve(slices, topology):
-    print('create_start_service_curve')
-    # TODO
+def create_start_service_curve(topology):
+    # на каждом коммутаторе вычисляем задержку приоритета
+    for sw in topology.switches.keys():
+        # вычисляем числитель
+        numerator = 0
+        for pr in topology.switches[sw].priority_list:
+            numerator += pr.priority_lambda / (pr.throughput ** 2)
+        # вычисляем знаменатель
+        for i in range(0, len(topology.switches[sw].priority_list)):
+            sigma_prev = topology.switches[sw].priority_list[i-1].sigma_priority
+            pr = topology.switches[sw].priority_list[i]
+            if pr.priority == 1:
+                pr.sigma_priority = pr.priority_lambda / pr.throughput
+            else:
+                pr.sigma_priority = sigma_prev + pr.priority_lambda / pr.throughput
+            denominator = 2 * (1 - sigma_prev) * (1 - pr.sigma_priority)
+            # итоговая задержка для приоритета
+            pr.delay = numerator / denominator
+
+    # вычисляем задержку для каждой очереди
+    for sw in topology.switches.keys():
+        for pr in topology.switches[sw].priority_list:
+            # вычисляем сумму минимальных требуемых скоростей для слайсов
+            sum_r_k = 0
+            for i in range(0, len(pr.queue_list)):
+                sum_r_k += pr.queue_list[i].slice.qos_throughput
+
+            for k in range(0, len(pr.queue_list)):
+                # вычисляем знаменатель
+                lambda_k = pr.queue_list[k].slice_lambda
+                r_k = pr.queue_list[k].slice.qos_throughput
+                denominator = 1 - (lambda_k * sum_r_k) / (pr.throughput * r_k)
+                # вычислем числитель
+                numerator = 0.5 * pr.priority_lambda / (pr.throughput ** 2)
+                for j in range(0, len(pr.queue_list)):
+                    if k == j:
+                        continue
+                    r_j = pr.queue_list[j].slice.qos_throughput
+                    l_j = pr.queue_list[j].slice.packet_size
+                    lambda_j = pr.queue_list[j].slice_lambda
+                    rho_j = lambda_j * l_j / r_j
+                    numerator += (r_j / r_k + rho_j * l_j) / pr.throughput
+                # итоговая задержка для
+                pr.queue_list[k].b_s = pr.delay + numerator / denominator
+    print_queue_organization(topology)
 
 
 # парсим конфиг файл и заполняем необходимы структуры
@@ -137,7 +180,8 @@ def parse_config(input_file, slices, topology):
         # считываем слайсы
         for sls_data in data["slices"]:
             correct = True
-            sls = objects.Slice(sls_data["sls_number"], sls_data["qos_throughput"], sls_data["qos_delay"])
+            sls = objects.Slice(sls_data["sls_number"], sls_data["qos_throughput"],
+                                sls_data["qos_delay"], sls_data["packet_size"])
             for fl in sls_data["flows"]:
                 flow = objects.Flow(fl["epsilon"], fl["path"])
                 if "statistic" in fl:
@@ -182,7 +226,7 @@ def main(argv):
         return
 
     # формируем кривую обслуживания на каждом коммутаторе для начальных параметров
-    create_start_service_curve(slices, topology)
+    create_start_service_curve(topology)
 
     # подбор корректных параметров для слайсов
     algorithm.modify_queue_parameters(slices, slices_order, topology)

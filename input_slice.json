@@ -18,6 +18,7 @@
       "sls_number" : 1,
       "qos_delay" : 0.1,
       "qos_throughput" : 40,
+      "packet_size" : 100,
       "flows" : [
         {
               "path" : [1, 2, 3],
@@ -36,6 +37,7 @@
       "sls_number" : 2,
       "qos_delay" : 1.5,
       "qos_throughput" : 30,
+      "packet_size" : 1000,
       "flows" : [
         {
               "path" : [2, 3],
