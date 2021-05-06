@@ -17,7 +17,7 @@
     {
       "sls_number" : 1,
       "qos_delay" : 0.1,
-      "qos_throughput" : 50,
+      "qos_throughput" : 40,
       "flows" : [
         {
               "path" : [1, 2, 3],
@@ -29,6 +29,19 @@
               "epsilon" : 0.01,
               "rho_a" : 0.67,
               "b_a" : 1
+          }
+      ]
+    },
+    {
+      "sls_number" : 2,
+      "qos_delay" : 1.5,
+      "qos_throughput" : 30,
+      "flows" : [
+        {
+              "path" : [2, 3],
+              "epsilon" : 0.01,
+              "rho_a" : 0.33,
+              "b_a" : 0.8
           }
       ]
     }
