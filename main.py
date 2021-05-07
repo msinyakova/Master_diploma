@@ -90,9 +90,9 @@ def redistribute_residual_channel_capacity(topology):
             return 1
         if last_sw:
             continue
+        sw.remaining_bandwidth = topology.switches[sw].physical_speed - priority_sum
         for pr in topology.switches[sw].priority_list:
-            remaining_bandwidth = topology.switches[sw].physical_speed - priority_sum
-            pr.throughput += (remaining_bandwidth / len(topology.switches[sw].priority_list))
+            pr.throughput += (sw.remaining_bandwidth / len(topology.switches[sw].priority_list))
             pr.recalculation()
     return 0
 

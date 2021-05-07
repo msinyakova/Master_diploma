@@ -54,6 +54,7 @@ class Switch:
         self.number = number_           # номер коммутатора
         self.priority_list = list()     # список приоритетов на коммутаторе
         self.physical_speed = 0         # физическая пропускная способность канала
+        self.remaining_bandwidth = 0    # остаточная пропускная способность канала
 
 
 class Topology:
