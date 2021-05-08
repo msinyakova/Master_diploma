@@ -50,21 +50,16 @@ class Priority:
 
 
 class Switch:
-    def __init__(self, number_):
+    def __init__(self, number_, speed_):
         self.number = number_           # номер коммутатора
         self.priority_list = list()     # список приоритетов на коммутаторе
-        self.physical_speed = 0         # физическая пропускная способность канала
+        self.physical_speed = speed_    # физическая пропускная способность канала
         self.remaining_bandwidth = 0    # остаточная пропускная способность канала
 
 
-class Topology:
-    def __init__(self):
-        self.switches = dict()      # коммутаторы в топологии
-        self.links = list()         # список каналов
-
-
 class Flow:
-    def __init__(self, eps_, path_):
+    def __init__(self, number_, eps_, path_):
+        self.number = number_   # номер потока
         self.rho_a = 0          # скорость поступления трафика (для кривой нагрузки)
         self.b_a = 0            # всплеск трафика (для кривой нагрузки)
         self.epsilon = eps_     # вероятность ошибки оценки кривой нагрузки
@@ -115,5 +110,9 @@ class Slice:
         self.qos_throughput = throughput_   # требования к пропускной способности слайса
         self.qos_delay = delay_             # требования к задержке слайса
         self.flows_list = list()            # список маршрутов
-        self.sls_sw_set = set()             # множество коммутаторв, через которые проходят потоки слайса
         self.packet_size = packet_          # размер пакетов, передаваемых в слайсе
+        self.sls_sw_set = set()             # множество коммутаторв, через которые проходят потоки слайса
+        self.used_sw = set()                # множество коммутаторов из sls_sw_set, на которых уже нельзя изменить qos
+        self.leaves = []                    # список всех вершин времен
+        self.tree = 0                       # дерево связности времен
+        self.route_time_constraints = []    # список временных неравенст для потока

@@ -5,6 +5,7 @@ import math
 
 import objects
 import algorithm
+import mytopology
 
 DELTA_DELAY = 0.8
 
@@ -80,19 +81,12 @@ def redistribute_residual_channel_capacity(topology):
         for pr in topology.switches[sw].priority_list:
             priority_sum += pr.throughput
         # print(topology.switches[sw].physical_speed, priority_sum)
-        last_sw = True
-        for lk in topology.links:
-            if lk[0] == sw:
-                last_sw = False
-                break
-        if not last_sw and topology.switches[sw].physical_speed < priority_sum:
+        if topology.switches[sw].physical_speed < priority_sum:
             print('Error: the required data transfer rate is greater than the physical bandwidth of the channel')
             return 1
-        if last_sw:
-            continue
-        sw.remaining_bandwidth = topology.switches[sw].physical_speed - priority_sum
+        topology.switches[sw].remaining_bandwidth = topology.switches[sw].physical_speed - priority_sum
         for pr in topology.switches[sw].priority_list:
-            pr.throughput += (sw.remaining_bandwidth / len(topology.switches[sw].priority_list))
+            pr.throughput += (topology.switches[sw].remaining_bandwidth / len(topology.switches[sw].priority_list))
             pr.recalculation()
     return 0
 
@@ -158,7 +152,7 @@ def create_start_service_curve(topology):
                     numerator += (r_j / r_k + rho_j * l_j) / pr.throughput
                 # итоговая задержка для
                 pr.queue_list[k].b_s = pr.delay + numerator / denominator
-    print_queue_organization(topology)
+    # print_queue_organization(topology)
 
 
 # парсим конфиг файл и заполняем необходимы структуры
@@ -170,20 +164,19 @@ def parse_config(input_file, slices, topology):
 
         # считываем топологию
         topo_data = data["topology"]
-        for sw_number in topo_data["switches"]:
-            sw = objects.Switch(sw_number)
-            topology.switches[sw_number] = sw
-        for lk in topo_data["links"]:
-            topology.links.append(lk["link"])
-            topology.switches[lk["link"][0]].physical_speed = lk["bandwidth"]
+        for sw_data in topo_data["switches"]:
+            sw = objects.Switch(sw_data["number"], sw_data["throughput"])
+            topology.switches[sw_data["number"]] = sw
+        topology.links = topo_data["links"]
 
         # считываем слайсы
         for sls_data in data["slices"]:
             correct = True
             sls = objects.Slice(sls_data["sls_number"], sls_data["qos_throughput"],
                                 sls_data["qos_delay"], sls_data["packet_size"])
+            i = 1
             for fl in sls_data["flows"]:
-                flow = objects.Flow(fl["epsilon"], fl["path"])
+                flow = objects.Flow(i, fl["epsilon"], fl["path"])
                 if "statistic" in fl:
                     with open(fl["statistic"], 'r') as f:
                         reader = csv.reader(f)
@@ -198,6 +191,7 @@ def parse_config(input_file, slices, topology):
                     flow.rho_a = fl["rho_a"]
                     flow.b_a = fl["b_a"]
                 sls.flows_list.append(flow)
+                i += 1
             if correct:
                 slices[sls.id] = sls
 
@@ -210,10 +204,11 @@ def write_result(output_file):
 
 def main(argv):
     slices = dict()
-    topology = objects.Topology()
+    topology = mytopology.Topology()
 
     # парсим конфиг файл и заполняем необходимы структуры
     parse_config(argv[0], slices, topology)
+    file_name = argv[0][5:len(argv[0])-5]
 
     # сортируем слайсы в зависимости от требования к задержке
     slices_order = list()       # список номеров слайсов, упорядоченный по возрастанию задержки
@@ -229,7 +224,7 @@ def main(argv):
     create_start_service_curve(topology)
 
     # подбор корректных параметров для слайсов
-    algorithm.modify_queue_parameters(slices, slices_order, topology)
+    algorithm.modify_queue_parameters(slices, slices_order, topology, file_name)
 
     # записываем результаты работы в выходной файл
     write_result(argv[1])

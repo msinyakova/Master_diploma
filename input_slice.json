@@ -1,16 +1,23 @@
 {
   "chi_square" : [249.4, 6.6, 9.2, 11.3, 13.3, 15.1, 16.8, 18.5, 20.1, 21.7, 23.2, 24.7, 26.2, 27.7, 29.1, 30.6, 32.0, 33.4, 34.8, 36.2, 37.6],
   "topology" : {
-    "switches" : [1, 2, 3],
-    "links" : [
+    "switches" : [
       {
-        "link" : [1, 2],
-        "bandwidth" : 100
+        "number" : 1,
+        "throughput" : 100
       },
       {
-        "link" : [2, 3],
-        "bandwidth" : 80
+        "number" : 2,
+        "throughput" : 90
+      },
+      {
+        "number" : 3,
+        "throughput" : 80
       }
+    ],
+    "links" : [
+      [1, 2],
+      [2, 3]
     ]
   },
   "slices" : [
