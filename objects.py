@@ -34,6 +34,7 @@ class Priority:
         self.delay = 0                              # суммарная задержка приоритета
         self.priority_lambda = queue.slice_lambda   # lambda суммарная по всем очередям
         self.sigma_priority = 0                     # сумма нагрузок вышестоящих приоритетов
+        self.slice_queue = dict()                   # соотношение номер сласа и очереди
 
     def recalculation(self):
         self.mean_delay = 0.0
@@ -55,6 +56,7 @@ class Switch:
         self.priority_list = list()     # список приоритетов на коммутаторе
         self.physical_speed = speed_    # физическая пропускная способность канала
         self.remaining_bandwidth = 0    # остаточная пропускная способность канала
+        self.slice_priorities = dict()  # соотношение номера слайса и его приоритета
 
 
 class Flow:

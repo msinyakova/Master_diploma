@@ -2,6 +2,23 @@ from mytime import Tree, MyTime
 import itertools
 
 
+# перераспределем остаточную пропускную способность канала
+def redistribute_residual_channel_capacity(topology):
+    for sw in topology.switches.keys():
+        priority_sum = 0
+        for pr in topology.switches[sw].priority_list:
+            priority_sum += pr.throughput
+        # print(topology.switches[sw].physical_speed, priority_sum)
+        if topology.switches[sw].physical_speed < priority_sum:
+            print('Error: the required data transfer rate is greater than the physical bandwidth of the channel')
+            return 1
+        topology.switches[sw].remaining_bandwidth = topology.switches[sw].physical_speed - priority_sum
+        for pr in topology.switches[sw].priority_list:
+            pr.throughput += (topology.switches[sw].remaining_bandwidth / len(topology.switches[sw].priority_list))
+            pr.recalculation()
+    return 0
+
+
 # формируем начальный временной промежуток
 def start_serv(time_t, elem):
     equal_start = dict()
@@ -322,3 +339,18 @@ class Topology:
                     flow.b_a) + ';\n')
             self.lengthLP += 1
         file.write('\n')
+
+    def delete_slice(self, sls):
+        for sw in sls.sls_sw_set:
+            pr_number = self.switches[sw].slice_priorities[sls.id]
+            pr = self.switches[sw].priority_list[pr_number - 1]
+            pr.slice_queue.pop(sls.id)
+            pos = 0
+            for i in range(0, len(pr.queue_list)):
+                if pr.queue_list[i].number == sls.id:
+                    break
+                pos += 1
+            pr.queue_list.pop(pos)
+            pr.throughput -= sls.qos_throughput
+            pr.recalculation()
+            self.switches[sw].slice_priorities.pop(sls.id)
