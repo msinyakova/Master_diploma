@@ -152,9 +152,76 @@ def parse_config(input_file, slices, topology):
 
 
 # записываем результаты работы в выходной файл
-def write_result(output_file):
-    print('write_result')
-    # TODO
+def write_result(output_file, slices, topology):
+    file = open(output_file, "w")
+    file.write('{\n')
+    file.write("\t\"slices\" : [\n")
+    # записываем информацию о слайсах
+    slice_numbers = len(slices.keys())
+    for sls in slices.keys():
+        file.write("\t\t{\n \t\t\t\"sls_number\" : " + str(sls) + ",\n")
+        file.write("\t\t\t\"packet_size\" : " + str(slices[sls].packet_size) + ",\n")
+        file.write("\t\t\t\"bandwidth\" : " + str(slices[sls].qos_throughput) + ",\n")
+        file.write("\t\t\t\"flows\" : [\n")
+        # записываем информацию о потоках
+        flow_count = len(slices[sls].flows_list)
+        for flow in slices[sls].flows_list:
+            file.write("\t\t\t\t{\n")
+            file.write("\t\t\t\t\t\"lambda\" : " + str(flow.rho_a) + ",\n")
+            file.write("\t\t\t\t\t\"path\" : [")
+            path_len = len(flow.path)
+            for elem in flow.path:
+                file.write(str(elem))
+                path_len -= 1
+                if path_len != 0:
+                    file.write(", ")
+            file.write("]\n\t\t\t\t}")
+            flow_count -= 1
+            if flow_count != 0:
+                file.write(",\n")
+            else:
+                file.write("\n")
+        file.write("\t\t\t]\n\t\t}")
+        slice_numbers -= 1
+        if slice_numbers != 0:
+            file.write(",\n")
+    file.write("\n\t],\n \t\"topology\" : { \n \t\t\"switches\" : [\n")
+    # записываем информацию о коммутаторах
+    sw_numbers = len(topology.switches.keys())
+    for sw in topology.switches.keys():
+        file.write("\t\t\t{\n \t\t\t\t\"number\" : " + str(sw) + ",\n")
+        file.write("\t\t\t\t\"bandwidth\" : " + str(topology.switches[sw].physical_speed) + ",\n")
+        file.write("\t\t\t\t\"queues\" : [\n")
+        # записываем информацию о каждой очереди
+        queues_count = 0
+        pr_count = len(topology.switches[sw].priority_list)
+        for pr in topology.switches[sw].priority_list:
+            pr_count -= 1
+            queues_count += len(pr.queue_list)
+            for queue in pr.queue_list:
+                file.write("\t\t\t\t\t{\n \t\t\t\t\t\t\"priority\" : " + str(pr.priority) + ",\n")
+                file.write("\t\t\t\t\t\t\"queue_number\" : " + str(queue.number) + ",\n")
+                file.write("\t\t\t\t\t\t\"slice\" : " + str(queue.slice.id) + ",\n")
+                file.write("\t\t\t\t\t\t\"weight\" : " + str(queue.weight) + "\n")
+                file.write("\t\t\t\t\t}")
+                queues_count -= 1
+                if pr_count != 0 or queues_count != 0:
+                    file.write(",\n")
+                else:
+                    file.write("\n")
+        file.write("\t\t\t\t]\n \t\t\t}")
+        sw_numbers -= 1
+        if sw_numbers != 0:
+            file.write(",\n")
+    file.write("\n\t\t],\n \t\t \"links\" : [\n")
+    # записываем информацию о каналах
+    lk_count = 0
+    for lk in topology.links:
+        file.write("\t\t\t[" + str(lk[0]) + ", " + str(lk[1]) + "]")
+        lk_count += 1
+        if lk_count != len(topology.links):
+            file.write(",\n")
+    file.write("\n\t\t] \n \t}\n }\n")
 
 
 def main(argv):
@@ -182,7 +249,7 @@ def main(argv):
     algorithm.modify_queue_parameters(slices, slices_order, topology, file_name)
 
     # записываем результаты работы в выходной файл
-    write_result(argv[1])
+    write_result(argv[1], slices, topology)
 
 
 if __name__ == "__main__":
