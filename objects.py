@@ -1,5 +1,11 @@
 import math
 
+CHI_SQUARE = [0.4549,  1.3863,  2.3660,  3.3567,  4.3515,  5.3481,  6.3458,  7.3441,  8.3428,  9.3418,
+              10.3410, 11.3403, 12.3398, 13.3393, 14.3389, 15.3385, 16.3382, 17.3379, 18.3377, 19.3374,
+              20.3372, 21.3370, 22.3369, 23.3367, 24.3366, 25.3365, 26.3363, 27.3362, 28.3361, 29.3360,
+              30.3359, 31.3359, 32.3358, 33.3357, 34.3356, 35.3356, 36.3355, 37.3355, 38.3354, 39.3353,
+              40.3353, 41.3352, 42.3352, 43.3352, 44.3351, 45.3351, 46.3350, 47.3350, 48.3350, 49.3349]
+
 
 class Queue:
     def __init__(self, number_, slice_, priority_, sw):
@@ -69,7 +75,7 @@ class Flow:
 
 # формирование кривой нагрузки. На вход подается файл со статистикой,
 # распределение хи квадрат и физическая скорость канала первого коммутатора в пути потока
-    def define_distribution(self, stats, chi_square, rate):
+    def define_distribution(self, stats, rate):
         # вычисляем сколько раз встречается каждое значение x_s
         x_s = dict()
         s = 0
@@ -94,16 +100,24 @@ class Flow:
             p_s = lambda_medium ** key / math.factorial(key) * math.exp(-lambda_medium)
             k_s = (x_s[key] - sum_n * p_s) ** 2 / sum_n * p_s
             k_sum += k_s
-        # print('K_критическое = ', chi_square[s - 1], ' K_наблюдаемое = ', k_sum)
-        if chi_square[s - 1] >= k_sum:
+        if s - 1 >= len(CHI_SQUARE):
             self.rho_a = lambda_medium
             sigma_a = 0
-            theta = 100000
+            theta = 10000
             self.b_a = sigma_a - 1 / theta * (
                     math.log(self.epsilon) + math.log(1 - math.exp(-theta * (rate - self.rho_a))))
-            # print('rho_a = ', self.rho_a, ' b_a = ', self.b_a)
         else:
-            print('Not poisson distribution')
+            # print('K_критическое = ', CHI_SQUARE[s - 1], ' K_наблюдаемое = ', k_sum)
+            if CHI_SQUARE[s - 1] >= k_sum:
+                self.rho_a = lambda_medium
+                sigma_a = 0
+                theta = 1000
+                self.b_a = sigma_a - 1 / theta * (
+                        math.log(self.epsilon) + math.log(1 - math.exp(-theta * (rate - self.rho_a))))
+                # print('rho_a = ', self.rho_a, ' b_a = ', self.b_a)
+            else:
+                print('Not poisson distribution')
+        # print('rho_a =', self.rho_a, 'b_a =', self.b_a)
 
 
 class Slice:
@@ -111,6 +125,7 @@ class Slice:
         self.id = id_                       # номер слайса
         self.qos_throughput = throughput_   # требования к пропускной способности слайса
         self.qos_delay = delay_             # требования к задержке слайса
+        self.estimate_delay = 0             # оценка задержки
         self.flows_list = list()            # список маршрутов
         self.packet_size = packet_          # размер пакетов, передаваемых в слайсе
         self.sls_sw_set = set()             # множество коммутаторв, через которые проходят потоки слайса

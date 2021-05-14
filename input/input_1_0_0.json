@@ -1,0 +1,107 @@
+{
+  "topology" : {
+    "switches" : [
+      {
+        "number" : 1,
+        "throughput" : 77
+      },
+      {
+        "number" : 2,
+        "throughput" : 90
+      },
+      {
+        "number" : 3,
+        "throughput" : 80
+      },
+      {
+        "number" : 4,
+        "throughput" : 90
+      },
+      {
+        "number" : 5,
+        "throughput" : 100
+      },
+      {
+        "number" : 6,
+        "throughput" : 110
+      },
+      {
+        "number" : 7,
+        "throughput" : 90
+      },
+      {
+        "number" : 8,
+        "throughput" : 100
+      },
+      {
+        "number" : 9,
+        "throughput" : 80
+      },
+      {
+        "number" : 10,
+        "throughput" : 80
+      }
+    ],
+    "links" : [
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [5, 6],
+      [6, 7],
+      [7, 8],
+      [8, 9],
+      [9, 10]
+    ]
+  },
+  "slices" : [
+    {
+      "sls_number" : 1,
+      "qos_delay" : 0.1,
+      "qos_throughput" : 75,
+      "packet_size" : 0.008,
+      "flows" : [
+        {
+          "path" : [1, 2, 3, 4, 5],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_1_0_0/poisson_1_1.csv"
+        },
+        {
+          "path" : [2, 3, 4, 5, 6, 7, 8],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_1_0_0/poisson_1_2.csv"
+        },
+        {
+          "path" : [7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_1_0_0/poisson_1_3.csv"
+        },
+        {
+          "path" : [1, 2, 3],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_1_0_0/poisson_1_4.csv"
+        },
+        {
+          "path" : [5, 6, 7, 8],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_1_0_0/poisson_1_5.csv"
+        },
+        {
+          "path" : [4, 5, 6, 7, 8],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_1_0_0/poisson_1_6.csv"
+        },
+        {
+          "path" : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_1_0_0/poisson_1_7.csv"
+        },
+        {
+          "path" : [9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_1_0_0/poisson_1_8.csv"
+        }
+      ]
+    }
+  ]
+}

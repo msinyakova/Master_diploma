@@ -6,18 +6,25 @@ def calculate_priority_delay(topology, sw):
     # вычисляем числитель
     numerator = 0
     for pr in topology.switches[sw].priority_list:
-        numerator += pr.priority_lambda / (pr.throughput ** 2)
+        numerator += pr.priority_lambda / (topology.switches[sw].physical_speed ** 2)
     # вычисляем знаменатель
     for i in range(0, len(topology.switches[sw].priority_list)):
         sigma_prev = topology.switches[sw].priority_list[i - 1].sigma_priority
         pr = topology.switches[sw].priority_list[i]
         if pr.priority == 1:
-            pr.sigma_priority = pr.priority_lambda / pr.throughput
+            pr.sigma_priority = pr.priority_lambda / topology.switches[sw].physical_speed
+            # if i != 0:
+            #     print('pr.priority_lambda =', pr.priority_lambda, 'throughput =', topology.switches[sw].physical_speed)
         else:
-            pr.sigma_priority = sigma_prev + pr.priority_lambda / pr.throughput
+            pr.sigma_priority = sigma_prev + pr.priority_lambda / topology.switches[sw].physical_speed
+            # if i != 0:
+            #     print('sigma_prev =', sigma_prev, 'pr.priority_lambda =', pr.priority_lambda, 'throughput =', topology.switches[sw].physical_speed)
         denominator = 2 * (1 - sigma_prev) * (1 - pr.sigma_priority)
+        # if i != 0:
+        #     print('sigma_prev =', sigma_prev, 'pr.sigma_priority =', pr.sigma_priority)
         # итоговая задержка для приоритета
-        # print('numerator =', numerator, 'denominator', denominator)
+        # if i != 0:
+        #     print('numerator =', numerator, 'denominator', denominator)
         pr.delay = numerator / denominator
 
 
@@ -32,6 +39,7 @@ def calculate_queue_delay(pr):
         lambda_k = pr.queue_list[k].slice_lambda
         r_k = pr.queue_list[k].slice.qos_throughput
         denominator = 1 - (lambda_k * sum_r_k) / (pr.throughput * r_k)
+        # print("lambda_k =", lambda_k, "sum_r_k =", sum_r_k, "pr.throughput =", pr.throughput, "r_k =", r_k)
         # вычислем числитель
         numerator = 0.5 * pr.priority_lambda / (pr.throughput ** 2)
         for j in range(0, len(pr.queue_list)):

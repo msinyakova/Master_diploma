@@ -286,6 +286,7 @@ class Topology:
                         break
                 if flag:
                     break
+            # print('rho_s = ', rho_s, 'b_s = ', b_s)
             for time_t in task:
                 if time_t == MyTime('0'):
                     continue

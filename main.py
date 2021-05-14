@@ -115,7 +115,6 @@ def parse_config(input_file, slices, topology):
     print('Start parsing input file:', input_file)
     with open(input_file) as json_file:
         data = json.load(json_file)
-        chi_square = data["chi_square"]
 
         # считываем топологию
         topo_data = data["topology"]
@@ -137,7 +136,7 @@ def parse_config(input_file, slices, topology):
                         reader = csv.reader(f)
                         stat_list = list(reader)
                     rate = topology.switches[flow.path[0]].physical_speed
-                    flow.define_distribution(stat_list, chi_square, rate)
+                    flow.define_distribution(stat_list, rate)
                     if flow.rho_a == 0 and flow.b_a == 0:
                         print("Reject slice installation")
                         correct = False
@@ -152,7 +151,8 @@ def parse_config(input_file, slices, topology):
 
 
 # записываем результаты работы в выходной файл
-def write_result(output_file, slices, topology):
+def write_result(file_name, slices, topology):
+    output_file = "out/out" + file_name + ".json"
     file = open(output_file, "w")
     file.write('{\n')
     file.write("\t\"slices\" : [\n")
@@ -162,6 +162,8 @@ def write_result(output_file, slices, topology):
         file.write("\t\t{\n \t\t\t\"sls_number\" : " + str(sls) + ",\n")
         file.write("\t\t\t\"packet_size\" : " + str(slices[sls].packet_size) + ",\n")
         file.write("\t\t\t\"bandwidth\" : " + str(slices[sls].qos_throughput) + ",\n")
+        file.write("\t\t\t\"qos_delay\" : " + str(slices[sls].qos_delay) + ",\n")
+        file.write("\t\t\t\"estimate_delay\" : " + str(slices[sls].estimate_delay) + ",\n")
         file.write("\t\t\t\"flows\" : [\n")
         # записываем информацию о потоках
         flow_count = len(slices[sls].flows_list)
@@ -230,7 +232,7 @@ def main(argv):
 
     # парсим конфиг файл и заполняем необходимы структуры
     parse_config(argv[0], slices, topology)
-    file_name = argv[0][5:len(argv[0])-5]
+    file_name = argv[0][11:len(argv[0])-5]
 
     # сортируем слайсы в зависимости от требования к задержке
     slices_order = list()       # список номеров слайсов, упорядоченный по возрастанию задержки
@@ -249,7 +251,7 @@ def main(argv):
     algorithm.modify_queue_parameters(slices, slices_order, topology, file_name)
 
     # записываем результаты работы в выходной файл
-    write_result(argv[1], slices, topology)
+    write_result(file_name, slices, topology)
 
 
 if __name__ == "__main__":

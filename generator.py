@@ -1,8 +1,8 @@
 import sys
 import json
 import enum
-import math
 import random
+import time
 
 T = 60
 transmit = 0.01
@@ -39,11 +39,13 @@ class Flow:
 
 
 class Slice:
-    def __init__(self, number_, packet_size_, bandwidth_):
+    def __init__(self, number_, packet_size_, bandwidth_, delay_, estimate_):
         self.number = number_            # номер слайса
         self.packet_size = packet_size_  # размер поступающих пакетов
         self.bandwidth = bandwidth_      # пропускная способность слайса
-        self.flows_list = list()  # список маршрутов
+        self.qos_delay = delay_          # требуемая задержка
+        self.estimate_delay = estimate_  # математическая оценка задержки
+        self.flows_list = list()         # список маршрутов
 
 
 class Queue:
@@ -212,14 +214,15 @@ def create_virtual_send(topology):
 
 # парсим входной файл
 def parse_config(argv, slices, topology):
-    print('Start parsing input file')
+    # print('Start parsing input file')
     with open(argv[0]) as json_file:
         data = json.load(json_file)
 
         # считываем слайсы
         slices_data = data['slices']
         for sls in slices_data:
-            one_slice = Slice(sls['sls_number'], sls['packet_size'], sls['bandwidth'])
+            one_slice = Slice(sls['sls_number'], sls['packet_size'], sls['bandwidth'],
+                              sls['qos_delay'], sls['estimate_delay'])
             i = 1
             for fl in sls['flows']:
                 flow = Flow(i, fl['lambda'], fl['path'])
@@ -252,7 +255,7 @@ def parse_config(argv, slices, topology):
             topology[lk[0]].links_state = True
     # формируем виртуальную очередь на отправку пакетов
     create_virtual_send(topology)
-    print('Finish parsing file\n')
+    # print('Finish parsing file')
 
 
 # генерация входящего потока в виде Пуассона
@@ -267,13 +270,23 @@ def generate(slices, event_time):
                 # добавляем шейпинг
                 if (packet_count * sls.packet_size) / t > sls.bandwidth:
                     t += ((packet_count * sls.packet_size / sls.bandwidth) - t)
-                print("sls_number", sls.number, "flow =", flow.path[0], "time = ", t)
+                # print("sls_number", sls.number, "flow =", flow.path[0], "time = ", t)
                 arrival_packet = Packet(sls.packet_size, sls.number, t, flow)
                 # добавляем событие в общий список событий
                 event_time.add_event(Event(State.ARRIVAL, t, arrival_packet, flow.path[0]))
                 # генерируем экспоненциальное значение временного интервала между событиями
                 t += random.expovariate(flow.p_lambda)
-    print("Finish generate\n")
+    print("Finish generate")
+
+
+def get_next_switch(packet, sw_number):
+    for i in range(0, len(packet.flow.path)):
+        if packet.flow.path[i] == sw_number:
+            if i == len(packet.flow.path) - 1:
+                return 0
+            else:
+                return packet.flow.path[i+1]
+    return 0
 
 
 # симуляция передачи, пока реализована на одном узле
@@ -285,14 +298,13 @@ def simulate(event_time, topology, stat):
         sw = topology[event.switch_number]
         # если наступило событие окончания передачи пакета, освободи канал
         if event.state == State.SEND:
-            print("\n1 --- Chanel became free in time", event.time, "on switch", sw.id)
+            # print("\n1 --- Chanel became free in time", event.time, "on switch", sw.id)
             sw.link_state = True
             # print('chanel is free')
 
         # если пришет новый пакет, размести его в буфере соответствующей очереди
         if event.state == State.ARRIVAL:
-            print("\n2 --- In time", event.time, "on switch", sw.id,
-                  "arrived packet with time", event.packet.begin_time)
+            # print("\n2 --- In time", event.time, "on switch", sw.id, "arrived packet with time", event.packet.begin_time)
             # print("sw :", sw.id, "sw.slice_distribution :", sw.slice_distribution, "slice :", event.packet.slice)
             # определяем очередь, которая соответствует данному слайсу
             queue_number = sw.slice_distribution[event.packet.slice]
@@ -310,25 +322,26 @@ def simulate(event_time, topology, stat):
                 event = event_time.get_time()
                 continue
             # проверям состояние виртулаьного времени
-            print("\n3 --- Send packet in time", event.time, "with time", packet.begin_time, "on switch", sw.id)
+            # print("\n3 --- Send packet in time", event.time, "with time", packet.begin_time, "on switch", sw.id)
             # print("sw :", sw.id, "sw.slice_distribution :", sw.slice_distribution, "slice :", packet.slice)
             sw.check_virtual_time_correct(sw.slice_distribution[packet.slice], event.time)
             # вычисляем время окончания отправки пакета
-            duration = math.ceil(float(packet.size) / sw.bandwidth)
+            duration = float(packet.size) / sw.bandwidth
+            # print("duration :", duration, ", packet:", packet.size, ", bandwidth :", sw.bandwidth)
             # ставим флаг занятости канала передачи
             sw.link_state = False
             # добавляем новое событие на текущем коммутаторе
-            print("\n4 --- Create new event on sw", sw.id, "packet time", packet.begin_time)
+            # print("\n4 --- Create new event on sw", sw.id, "packet time", packet.begin_time)
             event_time.add_event(Event(State.SEND, event.time + duration, 0, sw.id))
             # создаем событие на следующем коммутаторе
-            if len(sw.next_switches) != 0:
-                next_sw = sw.next_switches[0]
-                print("\n4 --- Create new event on sw", next_sw, "packet time", packet.begin_time)
+            next_sw = get_next_switch(packet, sw.id)
+            if next_sw != 0:
+                # print("\n4 --- Create new event on sw", next_sw, "packet time", packet.begin_time)
                 event_time.add_event(Event(State.ARRIVAL, event.time + duration + transmit, packet, next_sw))
             else:
                 # для каждого слайса сохраняем суммарную задержку в сети
                 # print('packet_begin_time =', packet.begin_time)
-                stat.delay[packet.slice].append(event.time + duration + transmit - packet.begin_time)
+                stat.delay[packet.slice].append(event.time + duration - packet.begin_time)
             # на каждом коммутаторе для каждого слайса сохраняем объем переданных данных
             stat.data_voluem[sw.id][packet.slice] += packet.size
             # и вычисляем текущую пропускную способность
@@ -340,6 +353,7 @@ def simulate(event_time, topology, stat):
 
 # ----------------------------MAIN------------------------------------
 def main(argv):
+    start_time = time.time()
     slices = dict()
     topology = dict()
 
@@ -356,10 +370,20 @@ def main(argv):
 
     # выполняем симуляцию отправки пакетов
     simulate(event_time, topology, stat)
+
+    finish_time = time.time() - start_time
+
+    output_file = "gene_out/gene_" + argv[0][4:len(argv[0])-5]
+    file = open(output_file, 'w')
     for sls in slices.keys():
         print("delay on slice", sls, ':', max(stat.delay[sls]))
-    for sw in topology.keys():
-        print("data value on switch", sw, ':', stat.data_voluem[sw])
+        file.write("delay on slice " + str(sls) + " : " + str(max(stat.delay[sls])) + '\n')
+        print("required qos delay", sls, ':', slices[sls].delay)
+        file.write("required qos delay " + str(sls) + " : " + str(slices[sls].delay) + '\n')
+        print("estimate delay :", slices[sls].estimate_delay)
+        file.write("estimate delay :" + str(slices[sls].estimate_delay) + '\n')
+        print("simulation time :", finish_time)
+        file.write("simulation time : " + str(finish_time) + '\n')
 
 
 if __name__ == "__main__":

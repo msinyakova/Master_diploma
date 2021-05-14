@@ -8,11 +8,11 @@ def find_switch(topology, sls_sw_set, used_sw, sls_id):
     res_sw = 0
     for sw in available_sw:
         # если слайс находится в 0 приоритете, то увеличить приоритет на этом коммутаторе нельзя
-        if sls_id in topology.switches[sw].priority_list[0].slice_priorities.keys():
+        if sls_id in topology.switches[sw].priority_list[0].slice_queue.keys():
             used_sw.add(sw)
         # выбираем коммутатор, у которого наименьшее кол-во очередей в приоритете выше
         pr = topology.switches[sw].slice_priorities[sls_id] - 1
-        if sls_id in topology.switches[sw].priority_list[pr].slice_priorities.keys():
+        if sls_id in topology.switches[sw].priority_list[pr].slice_queue.keys():
             if min_queue_in_pr < len(topology.switches[sw].priority_list[pr-1].queue_list):
                 min_queue_in_pr = topology.switches[sw].priority_list[pr-1].queue_list
                 res_sw = sw
@@ -52,10 +52,13 @@ def check_slices_in_priority(slices, sw, topology, sls_number, file_name):
             if sls_delay > slices[sls_number].qos_delay:
                 find_parameters = False
             else:
+                slices[sls_number].estimate_delay = sls_delay
                 find_parameters = True
         else:
             if sls_delay > slices[queue.number].qos_delay:
                 return {False, find_parameters}
+            else:
+                slices[sls_number].estimate_delay = sls_delay
     return {True, find_parameters}
 
 
@@ -88,6 +91,7 @@ def modify_queue_parameters(slices, slices_order, topology, file_name):
         sls_delay = slicedelay.calculate_slice_delay(sls_number, slices, topology, file_name)
         # если полученная оценка меньше требуемой задержки, переходим к следующему слайсу
         if sls_delay < slices[sls_number].qos_delay:
+            slices[sls_number].estimate_delay = sls_delay
             continue
         correct = False             # корректно ли состояние других слайсов
         find_parameters = False     # найдены ли параметры для текущего слайса
