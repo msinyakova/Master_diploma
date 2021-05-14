@@ -384,6 +384,8 @@ def main(argv):
         file.write("estimate delay :" + str(slices[sls].estimate_delay) + '\n')
         print("simulation time :", finish_time)
         file.write("simulation time : " + str(finish_time) + '\n')
+        print("-------------------------------------------------")
+        file.write("-------------------------------------------------\n")
 
 
 if __name__ == "__main__":

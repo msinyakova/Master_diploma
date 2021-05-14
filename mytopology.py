@@ -5,10 +5,10 @@ import itertools
 # перераспределем остаточную пропускную способность канала
 def redistribute_residual_channel_capacity(topology):
     for sw in topology.switches.keys():
-        priority_sum = 0
+        priority_sum = 0.0
         for pr in topology.switches[sw].priority_list:
             priority_sum += pr.throughput
-        # print(topology.switches[sw].physical_speed, priority_sum)
+        # print(sw, ':', topology.switches[sw].physical_speed, priority_sum)
         if topology.switches[sw].physical_speed < priority_sum:
             print('Error: the required data transfer rate is greater than the physical bandwidth of the channel')
             return 1

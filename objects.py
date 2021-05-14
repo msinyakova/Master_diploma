@@ -13,10 +13,10 @@ class Queue:
         self.priority = priority_   # приоритет очереди на коммутаторе
         self.weight = 1.0           # доля пропускной способности приоритета (omega)
         self.slice = slice_         # указать на слайс, который передает в этой очереди
-        self.rho_s = 0              # скорость для кривой обслуживания
-        self.b_s = 0                # задержка для кривой обслуживания
+        self.rho_s = 0.0            # скорость для кривой обслуживания
+        self.b_s = 0.0              # задержка для кривой обслуживания
         self.flow_numbers = 0       # количество маршрутов слайса, проходящих через этот коммутатор
-        self.slice_lambda = 0       # lambda суммарная по всем потокам в слайсе
+        self.slice_lambda = 0.0     # lambda суммарная по всем потокам в слайсе
         self.add_flow_number(sw)
         self.find_slice_input_flow()
 
@@ -37,15 +37,15 @@ class Priority:
         self.throughput = throughput_               # пропускная способность приоритета
         self.queue_list = [queue]                   # список очередей, входящих в приоритет
         self.mean_delay = qos_delay_                # среднее требование по задержка приоритета
-        self.delay = 0                              # суммарная задержка приоритета
+        self.delay = 0.0                            # суммарная задержка приоритета
         self.priority_lambda = queue.slice_lambda   # lambda суммарная по всем очередям
-        self.sigma_priority = 0                     # сумма нагрузок вышестоящих приоритетов
+        self.sigma_priority = 0.0                   # сумма нагрузок вышестоящих приоритетов
         self.slice_queue = dict()                   # соотношение номер сласа и очереди
 
     def recalculation(self):
         self.mean_delay = 0.0
         self.priority_lambda = 0.0
-        required_throughput = 0
+        required_throughput = 0.0
         for queue in self.queue_list:
             self.mean_delay += queue.slice.qos_delay
             required_throughput += queue.slice.qos_throughput
@@ -61,15 +61,15 @@ class Switch:
         self.number = number_           # номер коммутатора
         self.priority_list = list()     # список приоритетов на коммутаторе
         self.physical_speed = speed_    # физическая пропускная способность канала
-        self.remaining_bandwidth = 0    # остаточная пропускная способность канала
+        self.remaining_bandwidth = 0.0  # остаточная пропускная способность канала
         self.slice_priorities = dict()  # соотношение номера слайса и его приоритета
 
 
 class Flow:
     def __init__(self, number_, eps_, path_):
         self.number = number_   # номер потока
-        self.rho_a = 0          # скорость поступления трафика (для кривой нагрузки)
-        self.b_a = 0            # всплеск трафика (для кривой нагрузки)
+        self.rho_a = 0.0        # скорость поступления трафика (для кривой нагрузки)
+        self.b_a = 0.0          # всплеск трафика (для кривой нагрузки)
         self.epsilon = eps_     # вероятность ошибки оценки кривой нагрузки
         self.path = path_       # список коммутатор, через которые проходит поток
 
@@ -125,7 +125,7 @@ class Slice:
         self.id = id_                       # номер слайса
         self.qos_throughput = throughput_   # требования к пропускной способности слайса
         self.qos_delay = delay_             # требования к задержке слайса
-        self.estimate_delay = 0             # оценка задержки
+        self.estimate_delay = 0.0           # оценка задержки
         self.flows_list = list()            # список маршрутов
         self.packet_size = packet_          # размер пакетов, передаваемых в слайсе
         self.sls_sw_set = set()             # множество коммутаторв, через которые проходят потоки слайса

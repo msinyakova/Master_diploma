@@ -3,7 +3,7 @@
     "switches" : [
       {
         "number" : 1,
-        "throughput" : 77
+        "throughput" : 80
       },
       {
         "number" : 2,
@@ -11,7 +11,7 @@
       },
       {
         "number" : 3,
-        "throughput" : 80
+        "throughput" : 100
       },
       {
         "number" : 4,
@@ -35,7 +35,7 @@
       },
       {
         "number" : 9,
-        "throughput" : 80
+        "throughput" : 110
       },
       {
         "number" : 10,
