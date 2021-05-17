@@ -381,7 +381,7 @@ def main(argv):
         print("required qos delay", sls, ':', slices[sls].qos_delay)
         file.write("required qos delay " + str(sls) + " : " + str(slices[sls].qos_delay) + '\n')
         print("estimate delay :", slices[sls].estimate_delay)
-        file.write("estimate delay :" + str(slices[sls].estimate_delay) + '\n')
+        file.write("estimate delay : " + str(slices[sls].estimate_delay) + '\n')
         print("simulation time :", finish_time)
         file.write("simulation time : " + str(finish_time) + '\n')
         print("-------------------------------------------------")

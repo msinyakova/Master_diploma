@@ -1,0 +1,416 @@
+{
+  "topology" : {
+    "switches" : [
+      {
+        "number" : 1,
+        "throughput" : 120
+      },
+      {
+        "number" : 2,
+        "throughput" : 110
+      },
+      {
+        "number" : 3,
+        "throughput" : 110
+      },
+      {
+        "number" : 4,
+        "throughput" : 112
+      },
+      {
+        "number" : 5,
+        "throughput" : 113
+      },
+      {
+        "number" : 6,
+        "throughput" : 110
+      },
+      {
+        "number" : 7,
+        "throughput" : 120
+      },
+      {
+        "number" : 8,
+        "throughput" : 108
+      },
+      {
+        "number" : 9,
+        "throughput" : 110
+      },
+      {
+        "number" : 10,
+        "throughput" : 110
+      }
+    ],
+    "links" : [
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [5, 6],
+      [6, 7],
+      [7, 8],
+      [8, 9],
+      [9, 10]
+    ]
+  },
+
+  "slices" : [
+    {
+      "sls_number" : 1,
+      "qos_delay" : 0.15,
+      "qos_throughput" : 10,
+      "packet_size" : 0.01,
+      "flows" : [
+        {
+          "path" : [3, 4, 5],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_1_1.csv"
+        },
+        {
+          "path" : [6, 7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_1_2.csv"
+        },
+        {
+          "path" : [7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_1_3.csv"
+        },
+        {
+          "path" : [1, 2, 3, 4, 5, 6],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_1_4.csv"
+        },
+        {
+          "path" : [8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_1_5.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 2,
+      "qos_delay" : 1.35,
+      "qos_throughput" : 7,
+      "packet_size" : 0.009,
+      "flows" : [
+        {
+          "path" : [1, 2, 3, 4],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_2_1.csv"
+        },
+        {
+          "path" : [2, 3, 4, 5, 6],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_2_2.csv"
+        },
+        {
+          "path" : [8, 9],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_2_2.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 3,
+      "qos_delay" : 1.4,
+      "qos_throughput" : 9,
+      "packet_size" : 0.008,
+      "flows" : [
+        {
+          "path" : [1, 2, 3, 4],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_3_1.csv"
+        },
+        {
+          "path" : [4, 5, 6, 7, 8],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_3_2.csv"
+        },
+        {
+          "path" : [7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_3_3.csv"
+        },
+        {
+          "path" : [2, 3, 4, 5],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_3_4.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 4,
+      "qos_delay" : 1.2,
+      "qos_throughput" : 12,
+      "packet_size" : 0.009,
+      "flows" : [
+        {
+          "path" : [7, 8, 9],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_1.csv"
+        },
+        {
+          "path" : [5, 6, 7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_2.csv"
+        },
+        {
+          "path" : [1, 2],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_3.csv"
+        },
+        {
+          "path" : [2, 3],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_4.csv"
+        },
+        {
+          "path" : [3, 4],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_5.csv"
+        },
+        {
+          "path" : [4, 5],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_6.csv"
+        },
+        {
+          "path" : [5, 6],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_7.csv"
+        },
+        {
+          "path" : [6, 7],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_8.csv"
+        },
+        {
+          "path" : [7, 8],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_4_9.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 5,
+      "qos_delay" : 4.5,
+      "qos_throughput" : 13,
+      "packet_size" : 0.008,
+      "flows" : [
+        {
+          "path" : [4, 5, 6, 7, 8, 9],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_5_1.csv"
+        },
+        {
+          "path" : [7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_5_2.csv"
+        },
+        {
+          "path" : [8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_5_3.csv"
+        },
+        {
+          "path" : [9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_5_4.csv"
+        },
+        {
+          "path" : [1, 2, 3],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_5_5.csv"
+        },
+        {
+          "path" : [3, 4, 5],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_5_6.csv"
+        },
+        {
+          "path" : [1, 2],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_5_7.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 6,
+      "qos_delay" : 4.7,
+      "qos_throughput" : 13,
+      "packet_size" : 0.009,
+      "flows" : [
+        {
+          "path" : [3, 4],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_6_1.csv"
+        },
+        {
+          "path" : [2, 3],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_6_2.csv"
+        },
+        {
+          "path" : [1, 2, 3, 4, 5, 6, 7],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_6_3.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 7,
+      "qos_delay" : 5.1,
+      "qos_throughput" : 5,
+      "packet_size" : 0.009,
+      "flows" : [
+        {
+          "path" : [9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_7_1.csv"
+        },
+        {
+          "path" : [1, 2],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_7_2.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 8,
+      "qos_delay" : 0.2,
+      "qos_throughput" : 18,
+      "packet_size" : 0.009,
+      "flows" : [
+        {
+          "path" : [8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_8_1.csv"
+        },
+        {
+          "path" : [1, 2, 3, 4],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_8_2.csv"
+        },
+        {
+          "path" : [7, 8],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_8_3.csv"
+        },
+        {
+          "path" : [5, 6, 7],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_8_4.csv"
+        },
+        {
+          "path" : [5, 6],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_8_5.csv"
+        },
+        {
+          "path" : [4, 5, 6, 7],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_8_6.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 9,
+      "qos_delay" : 1.2,
+      "qos_throughput" : 14,
+      "packet_size" : 0.009,
+      "flows" : [
+        {
+          "path" : [8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_9_1.csv"
+        },
+        {
+          "path" : [2, 3, 4, 5],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_9_2.csv"
+        },
+        {
+          "path" : [6, 7, 8],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_9_3.csv"
+        },
+        {
+          "path" : [6, 7],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_9_4.csv"
+        },
+        {
+          "path" : [9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_9_5.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 10,
+      "qos_delay" : 4.3,
+      "qos_throughput" : 5,
+      "packet_size" : 0.009,
+      "flows" : [
+        {
+          "path" : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_10_1.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 11,
+      "qos_delay" : 1.4,
+      "qos_throughput" : 9,
+      "packet_size" : 0.008,
+      "flows" : [
+        {
+          "path" : [1, 2, 3, 4],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_11_1.csv"
+        },
+        {
+          "path" : [4, 5, 6, 7, 8],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_11_2.csv"
+        },
+        {
+          "path" : [7, 8, 9, 10],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_11_3.csv"
+        },
+        {
+          "path" : [2, 3, 4, 5],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_11_4.csv"
+        }
+      ]
+    },
+    {
+      "sls_number" : 12,
+      "qos_delay" : 4.7,
+      "qos_throughput" : 13,
+      "packet_size" : 0.009,
+      "flows" : [
+        {
+          "path" : [3, 4],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_12_1.csv"
+        },
+        {
+          "path" : [2, 3],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_12_2.csv"
+        },
+        {
+          "path" : [1, 2, 3, 4, 5, 6, 7],
+          "epsilon" : 0.01,
+          "statistic" : "poisson_2_5_5/poisson_12_3.csv"
+        }
+      ]
+    }
+  ]
+}
